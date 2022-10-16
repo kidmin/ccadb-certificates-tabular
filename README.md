@@ -1,6 +1,6 @@
 ## Materials
 
-- [AllCertificateRecords in xlsx format](https://kidmin.github.io/ccadb-certificates-tabular/CCADB-certificates.xlsx)
+- [AllCertificateRecords in xlsx format](https://kidmin.github.io/ccadb-certificates-tabular/CCADB-certificates.xlsx) (updated every 3 days)
 
 ## External Links
 
