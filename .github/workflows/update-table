@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the repo
+        uses: actions/checkout@v3
+
+      - name: Prepare the environment
+        run: sudo pip3 install openpyxl lxml
+
+      - name: Download the latest AllCertificateRecordsCSVFormat
+        run: curl --connect-timeout 30 --max-time 300 --location -O https://ccadb-public.secure.force.com/ccadb/AllCertificateRecordsCSVFormat
+
+      - name: Generate the spreadsheet
+        run: python3 convert.py
+
+      - name: Prepare materials for pages
+        run: |
+          mkdir build
+          cp -p CCADB-certificates.xlsx build/
+
+      - name: Upload materials for pages as an artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: build
+
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    permissions:
+      pages: write
+      id-token: write
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
