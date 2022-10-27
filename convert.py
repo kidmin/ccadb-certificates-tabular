@@ -91,7 +91,7 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:AR{num_records}"
+    sheet.auto_filter.ref = f"A1:AT{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -137,6 +137,8 @@ def main():
     sheet.column_dimensions['AP'].width = 24
     sheet.column_dimensions['AQ'].width = 14
     sheet.column_dimensions['AR'].width = 14
+    sheet.column_dimensions['AS'].width = 8
+    sheet.column_dimensions['AT'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -186,6 +188,8 @@ def main():
     with open('AllCertificateRecordsCSVFormat', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         header = next(csv_reader)
+        header.append('X-Number of items in "JSON Array of Partitioned CRLs"')
+        header.append('X-crt.sh link')
         header = [openpyxl.cell.WriteOnlyCell(sheet, value=hc) for hc in header]
         for hc in header:
             hc.font = HFONT_STYLE
@@ -198,6 +202,16 @@ def main():
             if len(row) != 44:
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
+
+            # X-Number of items in "JSON Array of Partitioned CRLs"
+            if row[43] != '':
+                row.append(row[43].count('\n') + 1)
+            else:
+                row.append('')
+
+            # X-crt.sh link
+            row.append(f"https://crt.sh/?sha256={row[7]}")
+
             row = [openpyxl.cell.WriteOnlyCell(sheet, value=c) for c in row]
             for col_idx, cell in enumerate(row):
                 cell.border = BORDER_STYLE
@@ -205,6 +219,13 @@ def main():
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
                 elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
+                elif col_idx in {44}:
+                    cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
+                elif col_idx in {45}:
+                    cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
+                    href = cell.value
+                    cell.value = '\U0001F4DC'
+                    cell.hyperlink = href
                 else:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
             sheet.row_dimensions[row_no].height = 13.5
