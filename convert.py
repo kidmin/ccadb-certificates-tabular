@@ -219,6 +219,10 @@ def main():
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
                 elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
+                    if cell.value != '':
+                        cell.value = datetime.date.fromisoformat(cell.value)
+                    else:
+                        cell.value = None
                 elif col_idx in {44}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
                 elif col_idx in {45}:
