@@ -50,6 +50,8 @@ def canonicalize(row):
     row[29] = row[29].replace('.', '-')
     row[30] = row[30].replace('.', '-')
     row[34] = row[34].replace('.', '-')
+    row[44] = row[44].replace('.', '-')
+    row[45] = row[45].replace('.', '-')
     # JSON array
     if row[43] != '':
         row[43] = '\n'.join(json.loads(row[43]))
@@ -91,7 +93,7 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:AT{num_records}"
+    sheet.auto_filter.ref = f"A1:AV{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -137,8 +139,10 @@ def main():
     sheet.column_dimensions['AP'].width = 24
     sheet.column_dimensions['AQ'].width = 14
     sheet.column_dimensions['AR'].width = 14
-    sheet.column_dimensions['AS'].width = 8
-    sheet.column_dimensions['AT'].width = 4
+    sheet.column_dimensions['AS'].width = 12
+    sheet.column_dimensions['AT'].width = 12
+    sheet.column_dimensions['AU'].width = 8
+    sheet.column_dimensions['AV'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -199,7 +203,7 @@ def main():
         sheet.append(header)
 
         for row_no, row in enumerate(csv_reader, 2):
-            if len(row) != 44:
+            if len(row) != 46:
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
 
@@ -217,15 +221,15 @@ def main():
                 cell.border = BORDER_STYLE
                 if col_idx in {9, 31, 38}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
-                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34}:
+                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34, 44, 45}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
                     if cell.value != '':
                         cell.value = datetime.date.fromisoformat(cell.value)
                     else:
                         cell.value = None
-                elif col_idx in {44}:
+                elif col_idx in {46}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
-                elif col_idx in {45}:
+                elif col_idx in {47}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'
