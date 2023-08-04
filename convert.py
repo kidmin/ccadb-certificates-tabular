@@ -136,13 +136,14 @@ def main():
     sheet.column_dimensions['AM'].width = 8
     sheet.column_dimensions['AN'].width = 18
     sheet.column_dimensions['AO'].width = 18
-    sheet.column_dimensions['AP'].width = 24
-    sheet.column_dimensions['AQ'].width = 14
+    sheet.column_dimensions['AP'].width = 18
+    sheet.column_dimensions['AQ'].width = 24
     sheet.column_dimensions['AR'].width = 14
-    sheet.column_dimensions['AS'].width = 12
+    sheet.column_dimensions['AS'].width = 14
     sheet.column_dimensions['AT'].width = 12
-    sheet.column_dimensions['AU'].width = 8
-    sheet.column_dimensions['AV'].width = 4
+    sheet.column_dimensions['AU'].width = 12
+    sheet.column_dimensions['AV'].width = 8
+    sheet.column_dimensions['AW'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -192,6 +193,7 @@ def main():
     with open('AllCertificateRecordsCSVFormat', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         header = next(csv_reader)
+        header.insert(41, header.pop(46))
         header.append('X-Number of items in "JSON Array of Partitioned CRLs"')
         header.append('X-crt.sh link')
         header = [openpyxl.cell.WriteOnlyCell(sheet, value=hc) for hc in header]
@@ -203,33 +205,36 @@ def main():
         sheet.append(header)
 
         for row_no, row in enumerate(csv_reader, 2):
-            if len(row) != 46:
+            if len(row) != 47:
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
 
+            row.insert(41, row.pop(46))
+
             # X-Number of items in "JSON Array of Partitioned CRLs"
-            if row[43] != '':
-                row.append(row[43].count('\n') + 1)
+            if row[44] != '':
+                row.append(row[44].count('\n') + 1)
             else:
                 row.append('')
 
             # X-crt.sh link
             row.append(f"https://crt.sh/?sha256={row[7]}")
 
+
             row = [openpyxl.cell.WriteOnlyCell(sheet, value=c) for c in row]
             for col_idx, cell in enumerate(row):
                 cell.border = BORDER_STYLE
                 if col_idx in {9, 31, 38}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
-                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34, 44, 45}:
+                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34, 45, 46}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
                     if cell.value != '':
                         cell.value = datetime.date.fromisoformat(cell.value)
                     else:
                         cell.value = None
-                elif col_idx in {46}:
-                    cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
                 elif col_idx in {47}:
+                    cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
+                elif col_idx in {48}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'
