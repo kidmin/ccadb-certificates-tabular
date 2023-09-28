@@ -55,6 +55,12 @@ def canonicalize(row):
     # JSON array
     if row[43] != '':
         row[43] = '\n'.join(json.loads(row[43]))
+    # Status of Root Cert
+    root_status = {k: v for k, v in (e.split(': ', maxsplit=1) for e in row[48].split('; '))}
+    row[39] = root_status['Mozilla']
+    row[40] = root_status['Microsoft']
+    row[46] = root_status['Google Chrome']
+    row.append(root_status['Apple'])
 
 
 def add_metadata_sheet(metadata_sheet):
@@ -93,7 +99,7 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:AW{num_records}"
+    sheet.auto_filter.ref = f"A1:AY{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -137,13 +143,15 @@ def main():
     sheet.column_dimensions['AN'].width = 18
     sheet.column_dimensions['AO'].width = 18
     sheet.column_dimensions['AP'].width = 18
-    sheet.column_dimensions['AQ'].width = 24
-    sheet.column_dimensions['AR'].width = 14
-    sheet.column_dimensions['AS'].width = 14
-    sheet.column_dimensions['AT'].width = 12
-    sheet.column_dimensions['AU'].width = 12
-    sheet.column_dimensions['AV'].width = 8
-    sheet.column_dimensions['AW'].width = 4
+    sheet.column_dimensions['AQ'].width = 18
+    sheet.column_dimensions['AR'].width = 36
+    sheet.column_dimensions['AS'].width = 24
+    sheet.column_dimensions['AT'].width = 14
+    sheet.column_dimensions['AU'].width = 14
+    sheet.column_dimensions['AV'].width = 12
+    sheet.column_dimensions['AW'].width = 12
+    sheet.column_dimensions['AX'].width = 8
+    sheet.column_dimensions['AY'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -193,7 +201,11 @@ def main():
     with open('AllCertificateRecordsCSVFormat', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         header = next(csv_reader)
-        header.insert(41, header.pop(46))
+        header.pop(46)
+        header.insert(41, 'Google Chrome Status')
+        header.insert(42, 'Apple Status')
+        header.insert(43, header.pop(48))
+        header.pop(49)
         header.append('X-Number of items in "JSON Array of Partitioned CRLs"')
         header.append('X-crt.sh link')
         header = [openpyxl.cell.WriteOnlyCell(sheet, value=hc) for hc in header]
@@ -205,15 +217,18 @@ def main():
         sheet.append(header)
 
         for row_no, row in enumerate(csv_reader, 2):
-            if len(row) != 47:
+            if len(row) != 49:
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
 
             row.insert(41, row.pop(46))
+            row.insert(42, row.pop(49))
+            row.insert(43, row.pop(48))
+            row.pop(49)
 
             # X-Number of items in "JSON Array of Partitioned CRLs"
-            if row[44] != '':
-                row.append(row[44].count('\n') + 1)
+            if row[46] != '':
+                row.append(row[46].count('\n') + 1)
             else:
                 row.append('')
 
@@ -226,15 +241,15 @@ def main():
                 cell.border = BORDER_STYLE
                 if col_idx in {9, 31, 38}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
-                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34, 45, 46}:
+                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34, 47, 48}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
                     if cell.value != '':
                         cell.value = datetime.date.fromisoformat(cell.value)
                     else:
                         cell.value = None
-                elif col_idx in {47}:
+                elif col_idx in {49}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
-                elif col_idx in {48}:
+                elif col_idx in {50}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'
