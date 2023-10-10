@@ -18,8 +18,13 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v3
 
+      - name: Install Python 3.11.x
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
       - name: Prepare the environment
-        run: sudo pip3 install openpyxl lxml
+        run: pip3 install openpyxl lxml
 
       - name: Download the latest AllCertificateRecordsCSVFormat
         run: curl --connect-timeout 30 --max-time 300 --location -O https://ccadb.my.salesforce-sites.com/ccadb/AllCertificateRecordsCSVFormat
