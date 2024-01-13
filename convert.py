@@ -60,7 +60,7 @@ def canonicalize(row):
     row[39] = root_status['Mozilla']
     row[40] = root_status['Microsoft']
     row[46] = root_status['Google Chrome']
-    row.append(root_status['Apple'])
+    row.insert(47, root_status['Apple'])
 
 
 def add_metadata_sheet(metadata_sheet):
@@ -99,7 +99,7 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:AY{num_records}"
+    sheet.auto_filter.ref = f"A1:AZ{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -150,8 +150,9 @@ def main():
     sheet.column_dimensions['AU'].width = 14
     sheet.column_dimensions['AV'].width = 12
     sheet.column_dimensions['AW'].width = 12
-    sheet.column_dimensions['AX'].width = 8
-    sheet.column_dimensions['AY'].width = 4
+    sheet.column_dimensions['AX'].width = 12
+    sheet.column_dimensions['AY'].width = 8
+    sheet.column_dimensions['AZ'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -217,7 +218,7 @@ def main():
         sheet.append(header)
 
         for row_no, row in enumerate(csv_reader, 2):
-            if len(row) != 49:
+            if len(row) != 50:
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
 
@@ -247,9 +248,9 @@ def main():
                         cell.value = datetime.date.fromisoformat(cell.value)
                     else:
                         cell.value = None
-                elif col_idx in {49}:
-                    cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
                 elif col_idx in {50}:
+                    cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
+                elif col_idx in {51}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'
