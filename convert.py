@@ -223,7 +223,7 @@ def main():
             canonicalize(row)
 
             row.insert(41, row.pop(46))
-            row.insert(42, row.pop(49))
+            row.insert(42, row.pop(47))
             row.insert(43, row.pop(48))
             row.pop(49)
 
