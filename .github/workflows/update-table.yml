@@ -38,7 +38,7 @@ jobs:
           cp -p CCADB-certificates.xlsx build/
 
       - name: Upload materials for pages as an artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v3
         with:
           path: build
           if-no-files-found: error
