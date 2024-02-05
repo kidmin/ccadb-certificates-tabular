@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 
+import countrycode
 import csv
 import datetime
+from functools import cache
 import json
 import openpyxl
 
@@ -27,6 +29,23 @@ FILL_REVOKED = openpyxl.styles.PatternFill(patternType='solid', fgColor='ff3333'
 
 # fill style: technically-constrained certificates
 FILL_TECHNICALLY_CONSTRAINED = openpyxl.styles.PatternFill(patternType='solid', fgColor='e9f3ec', bgColor='e9f3ec')
+
+
+@cache
+def get_country_code(country_name):
+    candidate = None
+    if len(country_name) == 2 and country_name.isascii():
+        return country_name
+    else:
+        candidate = countrycode.countrycode(country_name, origin='country.name', destination='iso2c')
+        if candidate:
+            return candidate
+        else:
+            for fromcode in (e for e in countrycode.codelist.keys() if e.startswith('cldr.short.')):
+                for pos, candidate_name in enumerate(countrycode.codelist[fromcode]):
+                    if candidate_name.lower() == country_name.lower():
+                        return countrycode.codelist['iso2c'][pos]
+    return ''
 
 
 def canonicalize(row):
@@ -87,6 +106,16 @@ def add_metadata_sheet(metadata_sheet):
         cell.border = MBORDER_STYLE
     metadata_sheet.append(row)
 
+    row = [
+        'generator',
+        'https://github.com/kidmin/ccadb-certificates-tabular',
+    ]
+    row = [openpyxl.cell.WriteOnlyCell(metadata_sheet, value=c) for c in row]
+    for cell in row:
+        cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
+        cell.border = MBORDER_STYLE
+    metadata_sheet.append(row)
+
 
 def main():
     num_records = 0
@@ -99,7 +128,7 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:AZ{num_records}"
+    sheet.auto_filter.ref = f"A1:BA{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -151,8 +180,9 @@ def main():
     sheet.column_dimensions['AV'].width = 12
     sheet.column_dimensions['AW'].width = 12
     sheet.column_dimensions['AX'].width = 12
-    sheet.column_dimensions['AY'].width = 8
-    sheet.column_dimensions['AZ'].width = 4
+    sheet.column_dimensions['AY'].width = 4
+    sheet.column_dimensions['AZ'].width = 8
+    sheet.column_dimensions['BA'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -207,6 +237,7 @@ def main():
         header.insert(42, 'Apple Status')
         header.insert(43, header.pop(48))
         header.pop(49)
+        header.append('X-Country (alpha-2)')
         header.append('X-Number of items in "JSON Array of Partitioned CRLs"')
         header.append('X-crt.sh link')
         header = [openpyxl.cell.WriteOnlyCell(sheet, value=hc) for hc in header]
@@ -226,6 +257,9 @@ def main():
             row.insert(42, row.pop(47))
             row.insert(43, row.pop(48))
             row.pop(49)
+
+            # X-Country (alpha-2)
+            row.append(get_country_code(row[49]))
 
             # X-Number of items in "JSON Array of Partitioned CRLs"
             if row[46] != '':
@@ -248,9 +282,9 @@ def main():
                         cell.value = datetime.date.fromisoformat(cell.value)
                     else:
                         cell.value = None
-                elif col_idx in {50}:
-                    cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
                 elif col_idx in {51}:
+                    cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
+                elif col_idx in {52}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'
