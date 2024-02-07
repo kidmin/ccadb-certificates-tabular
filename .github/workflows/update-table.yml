@@ -73,4 +73,5 @@ jobs:
     steps:
       - name: Deploy to Google Spreadsheet
         run: |
+          ls -l CCADB-certificates.xlsx
           curl --connect-timeout 5 --fail --max-time 60 --no-keepalive --output /dev/null --retry 0 --silent --show-error --request POST --header 'Content-Type: application/octet-stream' --data-binary @CCADB-certificates.xlsx "${{ secrets.GAS_WEBAPP_DEPLOY_URL }}"
