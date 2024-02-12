@@ -5,9 +5,9 @@ on:
     - cron: '28 6 */3 * *'
 
 jobs:
-  build:
+  update-spreadsheet:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
 
     permissions:
       contents: read
@@ -42,8 +42,13 @@ jobs:
         with:
           path: build
 
+      - name: Deploy to Google Spreadsheet
+        run: |
+          ls -l CCADB-certificates.xlsx
+          curl --connect-timeout 5 --fail --max-time 60 --no-keepalive --output /dev/null --retry 0 --silent --show-error --request POST --header 'Content-Type: application/octet-stream' --data-binary @CCADB-certificates.xlsx "${{ secrets.GAS_WEBAPP_DEPLOY_URL }}"
 
-  deploy:
+
+  deploy-to-pages:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 2
@@ -60,18 +65,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-
-  deploy-spreadsheet:
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 2
-
-    permissions:
-      id-token: write
-
-    steps:
-      - name: Deploy to Google Spreadsheet
-        run: |
-          ls -l CCADB-certificates.xlsx
-          curl --connect-timeout 5 --fail --max-time 60 --no-keepalive --output /dev/null --retry 0 --silent --show-error --request POST --header 'Content-Type: application/octet-stream' --data-binary @CCADB-certificates.xlsx "${{ secrets.GAS_WEBAPP_DEPLOY_URL }}"
