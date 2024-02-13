@@ -3,6 +3,7 @@ name: CI
 on:
   schedule:
     - cron: '28 6 */3 * *'
+  workflow_dispatch:
 
 jobs:
   update-spreadsheet:
