@@ -49,7 +49,7 @@ jobs:
 
 
   deploy-to-pages:
-    needs: build
+    needs: update-spreadsheet
     runs-on: ubuntu-latest
     timeout-minutes: 2
     
