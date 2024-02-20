@@ -128,7 +128,7 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:BA{num_records}"
+    sheet.auto_filter.ref = f"A1:BB{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -174,15 +174,16 @@ def main():
     sheet.column_dimensions['AP'].width = 18
     sheet.column_dimensions['AQ'].width = 18
     sheet.column_dimensions['AR'].width = 36
-    sheet.column_dimensions['AS'].width = 24
-    sheet.column_dimensions['AT'].width = 14
+    sheet.column_dimensions['AS'].width = 8
+    sheet.column_dimensions['AT'].width = 24
     sheet.column_dimensions['AU'].width = 14
-    sheet.column_dimensions['AV'].width = 12
+    sheet.column_dimensions['AV'].width = 14
     sheet.column_dimensions['AW'].width = 12
     sheet.column_dimensions['AX'].width = 12
-    sheet.column_dimensions['AY'].width = 4
-    sheet.column_dimensions['AZ'].width = 8
-    sheet.column_dimensions['BA'].width = 4
+    sheet.column_dimensions['AY'].width = 12
+    sheet.column_dimensions['AZ'].width = 4
+    sheet.column_dimensions['BA'].width = 8
+    sheet.column_dimensions['BB'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -237,6 +238,7 @@ def main():
         header.insert(42, 'Apple Status')
         header.insert(43, header.pop(48))
         header.pop(49)
+        header.insert(44, 'X-Included in any Root Store?')
         header.append('X-Country (alpha-2)')
         header.append('X-Number of items in "JSON Array of Partitioned CRLs"')
         header.append('X-crt.sh link')
@@ -258,12 +260,15 @@ def main():
             row.insert(43, row.pop(48))
             row.pop(49)
 
+            # X-Included in any Root Store?
+            row.insert(44, 'TRUE' if any(e == 'Included' for e in row[39:43]) else 'FALSE')
+
             # X-Country (alpha-2)
-            row.append(get_country_code(row[49]))
+            row.append(get_country_code(row[50]))
 
             # X-Number of items in "JSON Array of Partitioned CRLs"
-            if row[46] != '':
-                row.append(row[46].count('\n') + 1)
+            if row[47] != '':
+                row.append(row[47].count('\n') + 1)
             else:
                 row.append('')
 
@@ -274,17 +279,17 @@ def main():
             row = [openpyxl.cell.WriteOnlyCell(sheet, value=c) for c in row]
             for col_idx, cell in enumerate(row):
                 cell.border = BORDER_STYLE
-                if col_idx in {9, 31, 38}:
+                if col_idx in {9, 31, 38, 44}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
-                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34, 47, 48}:
+                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34, 48, 49}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
                     if cell.value != '':
                         cell.value = datetime.date.fromisoformat(cell.value)
                     else:
                         cell.value = None
-                elif col_idx in {51}:
-                    cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
                 elif col_idx in {52}:
+                    cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
+                elif col_idx in {53}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'
