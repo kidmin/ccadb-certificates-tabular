@@ -30,6 +30,9 @@ FILL_REVOKED = openpyxl.styles.PatternFill(patternType='solid', fgColor='ff3333'
 # fill style: technically-constrained certificates
 FILL_TECHNICALLY_CONSTRAINED = openpyxl.styles.PatternFill(patternType='solid', fgColor='e9f3ec', bgColor='e9f3ec')
 
+# fill style: certificates not included in any root store
+FILL_NOT_TRUSTED = openpyxl.styles.PatternFill(patternType='solid', fgColor='c0c0c0', bgColor='c0c0c0')
+
 
 @cache
 def get_country_code(country_name):
@@ -229,6 +232,17 @@ def main():
     ]
     for rule in cert_constrained_rules:
         sheet.conditional_formatting.add(f"AM2:AM{num_records}", rule)
+
+    cert_not_trusted_rules = [
+        openpyxl.formatting.rule.CellIsRule(
+            operator='equal',
+            formula=[False],
+            stopIfTrue=False,
+            fill=FILL_NOT_TRUSTED
+            ),
+    ]
+    for rule in cert_not_trusted_rules:
+        sheet.conditional_formatting.add(f"AS2:AS{num_records}", rule)
 
     with open('AllCertificateRecordsCSVFormat', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
