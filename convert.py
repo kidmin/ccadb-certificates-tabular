@@ -50,11 +50,11 @@ def get_country_code(country_name):
 
 def canonicalize(row):
     # Audits Same as Parent?
-    row[9] = row[9].upper()
+    row[9] = (row[9].upper() == 'TRUE')
     # CP/CPS Same as Parent?
-    row[31] = row[31].upper()
+    row[31] = (row[31].upper() == 'TRUE')
     # Technically Constrained
-    row[38] = row[38].upper()
+    row[38] = (row[38].upper() == 'TRUE')
     # date (YYYY-mm-dd)
     row[13] = row[13].replace('.', '-')
     row[14] = row[14].replace('.', '-')
@@ -222,7 +222,7 @@ def main():
     cert_constrained_rules = [
         openpyxl.formatting.rule.CellIsRule(
             operator='equal',
-            formula=['"TRUE"'],
+            formula=[True],
             stopIfTrue=False,
             fill=FILL_TECHNICALLY_CONSTRAINED
             ),
@@ -261,7 +261,7 @@ def main():
             row.pop(49)
 
             # X-Included in any Root Store?
-            row.insert(44, 'TRUE' if any(e == 'Included' for e in row[39:43]) else 'FALSE')
+            row.insert(44, any(e.capitalize() == 'Included' for e in row[39:43]))
 
             # X-Country (alpha-2)
             row.append(get_country_code(row[50]))
