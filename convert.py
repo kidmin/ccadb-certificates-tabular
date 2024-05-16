@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import base64
 import countrycode
 import csv
 import datetime
@@ -55,9 +56,23 @@ def canonicalize(row):
     # Audits Same as Parent?
     row[9] = (row[9].upper() == 'TRUE')
     # CP/CPS Same as Parent?
-    row[31] = (row[31].upper() == 'TRUE')
+    row[41] = (row[41].upper() == 'TRUE')
     # Technically Constrained
-    row[38] = (row[38].upper() == 'TRUE')
+    row[48] = (row[48].upper() == 'TRUE')
+    # TLS Capable
+    row[62] = (row[62].upper() == 'TRUE')
+    # TLS EV Capable
+    row[63] = (row[63].upper() == 'TRUE')
+    # Code Signing Capable
+    row[64] = (row[64].upper() == 'TRUE')
+    # S/MIME Capable
+    row[65] = (row[65].upper() == 'TRUE')
+    # Authority Key Identifier
+    if row[59] != '':
+        row[59] = base64.b64decode(row[59]).hex(':')
+    # Subject Key Identifier
+    if row[60] != '':
+        row[60] = base64.b64decode(row[60]).hex(':')
     # date (YYYY-mm-dd)
     row[13] = row[13].replace('.', '-')
     row[14] = row[14].replace('.', '-')
@@ -71,18 +86,25 @@ def canonicalize(row):
     row[28] = row[28].replace('.', '-')
     row[29] = row[29].replace('.', '-')
     row[30] = row[30].replace('.', '-')
+    row[33] = row[33].replace('.', '-')
     row[34] = row[34].replace('.', '-')
+    row[35] = row[35].replace('.', '-')
+    row[38] = row[38].replace('.', '-')
+    row[39] = row[39].replace('.', '-')
+    row[40] = row[40].replace('.', '-')
     row[44] = row[44].replace('.', '-')
-    row[45] = row[45].replace('.', '-')
+    row[52] = row[52].replace('.', '-')
+    row[53] = row[53].replace('.', '-')
     # JSON array
-    if row[43] != '':
-        row[43] = '\n'.join(json.loads(row[43]))
+    if row[51] != '':
+        row[51] = '\n'.join(json.loads(row[51]))
     # Status of Root Cert
-    root_status = {k: v for k, v in (e.split(': ', maxsplit=1) for e in row[48].split('; '))}
-    row[39] = root_status['Mozilla']
-    row[40] = root_status['Microsoft']
-    row[46] = root_status['Google Chrome']
-    row.insert(47, root_status['Apple'])
+    root_status = {k: v for k, v in (e.split(': ', maxsplit=1) for e in row[58].split('; '))}
+    row[55] = root_status['Google Chrome']
+    row[56] = root_status['Microsoft']
+    row[57] = root_status['Mozilla']
+    row.insert(58, root_status['Apple'])
+    row.insert(58, row.pop(54))
 
 
 def add_metadata_sheet(metadata_sheet):
@@ -122,7 +144,7 @@ def add_metadata_sheet(metadata_sheet):
 
 def main():
     num_records = 0
-    with open('AllCertificateRecordsCSVFormat', 'r', encoding='UTF-8', newline='') as csv_fh:
+    with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         for _ in csv_reader:
             num_records += 1
@@ -131,7 +153,7 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:BB{num_records}"
+    sheet.auto_filter.ref = f"A1:BR{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -164,29 +186,45 @@ def main():
     sheet.column_dimensions['AC'].width = 12
     sheet.column_dimensions['AD'].width = 12
     sheet.column_dimensions['AE'].width = 12
-    sheet.column_dimensions['AF'].width = 8
+    sheet.column_dimensions['AF'].width = 14
     sheet.column_dimensions['AG'].width = 14
-    sheet.column_dimensions['AH'].width = 14
+    sheet.column_dimensions['AH'].width = 12
     sheet.column_dimensions['AI'].width = 12
-    sheet.column_dimensions['AJ'].width = 14
+    sheet.column_dimensions['AJ'].width = 12
     sheet.column_dimensions['AK'].width = 14
     sheet.column_dimensions['AL'].width = 14
-    sheet.column_dimensions['AM'].width = 8
-    sheet.column_dimensions['AN'].width = 18
-    sheet.column_dimensions['AO'].width = 18
-    sheet.column_dimensions['AP'].width = 18
-    sheet.column_dimensions['AQ'].width = 18
-    sheet.column_dimensions['AR'].width = 36
-    sheet.column_dimensions['AS'].width = 8
-    sheet.column_dimensions['AT'].width = 24
+    sheet.column_dimensions['AM'].width = 12
+    sheet.column_dimensions['AN'].width = 12
+    sheet.column_dimensions['AO'].width = 12
+    sheet.column_dimensions['AP'].width = 8
+    sheet.column_dimensions['AQ'].width = 14
+    sheet.column_dimensions['AR'].width = 14
+    sheet.column_dimensions['AS'].width = 12
+    sheet.column_dimensions['AT'].width = 14
     sheet.column_dimensions['AU'].width = 14
     sheet.column_dimensions['AV'].width = 14
-    sheet.column_dimensions['AW'].width = 12
-    sheet.column_dimensions['AX'].width = 12
-    sheet.column_dimensions['AY'].width = 12
-    sheet.column_dimensions['AZ'].width = 4
+    sheet.column_dimensions['AW'].width = 8
+    sheet.column_dimensions['AX'].width = 24
+    sheet.column_dimensions['AY'].width = 14
+    sheet.column_dimensions['AZ'].width = 14
     sheet.column_dimensions['BA'].width = 8
-    sheet.column_dimensions['BB'].width = 4
+    sheet.column_dimensions['BB'].width = 12
+    sheet.column_dimensions['BC'].width = 12
+    sheet.column_dimensions['BD'].width = 18
+    sheet.column_dimensions['BE'].width = 18
+    sheet.column_dimensions['BF'].width = 18
+    sheet.column_dimensions['BG'].width = 18
+    sheet.column_dimensions['BH'].width = 8
+    sheet.column_dimensions['BI'].width = 36
+    sheet.column_dimensions['BJ'].width = 4
+    sheet.column_dimensions['BK'].width = 4
+    sheet.column_dimensions['BL'].width = 12
+    sheet.column_dimensions['BM'].width = 4
+    sheet.column_dimensions['BN'].width = 8
+    sheet.column_dimensions['BO'].width = 8
+    sheet.column_dimensions['BP'].width = 8
+    sheet.column_dimensions['BQ'].width = 8
+    sheet.column_dimensions['BR'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -231,7 +269,7 @@ def main():
             ),
     ]
     for rule in cert_constrained_rules:
-        sheet.conditional_formatting.add(f"AM2:AM{num_records}", rule)
+        sheet.conditional_formatting.add(f"AW2:AW{num_records}", rule)
 
     cert_not_trusted_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -242,19 +280,18 @@ def main():
             ),
     ]
     for rule in cert_not_trusted_rules:
-        sheet.conditional_formatting.add(f"AS2:AS{num_records}", rule)
+        sheet.conditional_formatting.add(f"BH2:BH{num_records}", rule)
 
-    with open('AllCertificateRecordsCSVFormat', 'r', encoding='UTF-8', newline='') as csv_fh:
+    with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         header = next(csv_reader)
-        header.pop(46)
-        header.insert(41, 'Google Chrome Status')
-        header.insert(42, 'Apple Status')
-        header.insert(43, header.pop(48))
-        header.pop(49)
-        header.insert(44, 'X-Included in any Root Store?')
-        header.append('X-Country (alpha-2)')
-        header.append('X-Number of items in "JSON Array of Partitioned CRLs"')
+        header.pop(58)
+        header[55] = 'Google Chrome Status'
+        header.insert(58, 'Apple Status')
+        header.insert(58, header.pop(54))
+        header.insert(58, 'X-Included in any Root Store?')
+        header.insert(52, 'X-Number of items in "JSON Array of Partitioned CRLs"')
+        header.insert(64, 'X-Country (alpha-2)')
         header.append('X-crt.sh link')
         header = [openpyxl.cell.WriteOnlyCell(sheet, value=hc) for hc in header]
         for hc in header:
@@ -265,37 +302,33 @@ def main():
         sheet.append(header)
 
         for row_no, row in enumerate(csv_reader, 2):
-            if len(row) != 50:
+            if len(row) != 66:
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
 
-            row.insert(41, row.pop(46))
-            row.insert(42, row.pop(47))
-            row.insert(43, row.pop(48))
-            row.pop(49)
+            row.pop(59)
 
             # X-Included in any Root Store?
-            row.insert(44, any(e.capitalize() == 'Included' for e in row[39:43]))
+            row.insert(58, any(e.capitalize() == 'Included' for e in row[54:58]))
 
             # X-Country (alpha-2)
-            row.append(get_country_code(row[50]))
+            row.insert(63, get_country_code(row[62]))
 
             # X-Number of items in "JSON Array of Partitioned CRLs"
-            if row[47] != '':
-                row.append(row[47].count('\n') + 1)
+            if row[51] != '':
+                row.insert(52, row[51].count('\n') + 1)
             else:
-                row.append('')
+                row.insert(52, '')
 
             # X-crt.sh link
             row.append(f"https://crt.sh/?sha256={row[7]}")
 
-
             row = [openpyxl.cell.WriteOnlyCell(sheet, value=c) for c in row]
             for col_idx, cell in enumerate(row):
                 cell.border = BORDER_STYLE
-                if col_idx in {9, 31, 38, 44}:
+                if col_idx in {9, 41, 48, 59, 65, 66, 67, 68}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
-                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 34, 48, 49}:
+                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 33, 34, 35, 38, 39, 40, 44, 53, 54}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
                     if cell.value != '':
                         cell.value = datetime.date.fromisoformat(cell.value)
@@ -303,7 +336,7 @@ def main():
                         cell.value = None
                 elif col_idx in {52}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
-                elif col_idx in {53}:
+                elif col_idx in {69}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'

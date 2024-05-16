@@ -27,7 +27,7 @@ jobs:
         run: pip3 install openpyxl lxml countrycode==0.4.0
 
       - name: Download the latest AllCertificateRecordsCSVFormat
-        run: curl --connect-timeout 30 --max-time 300 --location -O https://ccadb.my.salesforce-sites.com/ccadb/AllCertificateRecordsCSVFormat
+        run: curl --connect-timeout 30 --max-time 300 --location -O https://ccadb.my.salesforce-sites.com/ccadb/AllCertificateRecordsCSVFormatv2
 
       - name: Generate the spreadsheet
         run: python3 convert.py
