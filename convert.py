@@ -67,6 +67,10 @@ def canonicalize(row):
     row[64] = (row[64].upper() == 'TRUE')
     # S/MIME Capable
     row[65] = (row[65].upper() == 'TRUE')
+    # CP Same as Parent?
+    row[66] = (row[66].upper() == 'TRUE')
+    # CPS Same as Parent?
+    row[68] = (row[68].upper() == 'TRUE')
     # Authority Key Identifier
     if row[59] != '':
         row[59] = base64.b64decode(row[59]).hex(':')
@@ -95,6 +99,8 @@ def canonicalize(row):
     row[44] = row[44].replace('.', '-')
     row[52] = row[52].replace('.', '-')
     row[53] = row[53].replace('.', '-')
+    row[67] = row[67].replace('.', '-')
+    row[69] = row[69].replace('.', '-')
     # JSON array
     if row[51] != '':
         row[51] = '\n'.join(json.loads(row[51]))
@@ -153,7 +159,7 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:BR{num_records}"
+    sheet.auto_filter.ref = f"A1:BW{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -224,7 +230,12 @@ def main():
     sheet.column_dimensions['BO'].width = 8
     sheet.column_dimensions['BP'].width = 8
     sheet.column_dimensions['BQ'].width = 8
-    sheet.column_dimensions['BR'].width = 4
+    sheet.column_dimensions['BR'].width = 8
+    sheet.column_dimensions['BS'].width = 12
+    sheet.column_dimensions['BT'].width = 8
+    sheet.column_dimensions['BU'].width = 12
+    sheet.column_dimensions['BV'].width = 14
+    sheet.column_dimensions['BW'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -302,7 +313,7 @@ def main():
         sheet.append(header)
 
         for row_no, row in enumerate(csv_reader, 2):
-            if len(row) != 66:
+            if len(row) != 71:
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
 
@@ -326,9 +337,9 @@ def main():
             row = [openpyxl.cell.WriteOnlyCell(sheet, value=c) for c in row]
             for col_idx, cell in enumerate(row):
                 cell.border = BORDER_STYLE
-                if col_idx in {9, 41, 48, 59, 65, 66, 67, 68}:
+                if col_idx in {9, 41, 48, 59, 65, 66, 67, 68, 69, 71}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
-                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 33, 34, 35, 38, 39, 40, 44, 53, 54}:
+                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 33, 34, 35, 38, 39, 40, 44, 53, 54, 70, 72}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
                     if cell.value != '':
                         cell.value = datetime.date.fromisoformat(cell.value)
@@ -336,7 +347,7 @@ def main():
                         cell.value = None
                 elif col_idx in {52}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
-                elif col_idx in {69}:
+                elif col_idx in {74}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'
