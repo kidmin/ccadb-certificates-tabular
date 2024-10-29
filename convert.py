@@ -53,64 +53,88 @@ def get_country_code(country_name):
 
 
 def canonicalize(row):
-    # Audits Same as Parent?
-    row[9] = (row[9].upper() == 'TRUE')
-    # CP/CPS Same as Parent?
-    row[41] = (row[41].upper() == 'TRUE')
     # Technically Constrained
-    row[48] = (row[48].upper() == 'TRUE')
-    # TLS Capable
-    row[62] = (row[62].upper() == 'TRUE')
-    # TLS EV Capable
-    row[63] = (row[63].upper() == 'TRUE')
-    # Code Signing Capable
-    row[64] = (row[64].upper() == 'TRUE')
-    # S/MIME Capable
-    row[65] = (row[65].upper() == 'TRUE')
+    row[19] = (row[19].upper() == 'TRUE')
+    # Audits Same as Parent?
+    row[24] = (row[24].upper() == 'TRUE')
     # CP Same as Parent?
-    row[66] = (row[66].upper() == 'TRUE')
+    row[62] = (row[62].upper() == 'TRUE')
     # CPS Same as Parent?
+    row[65] = (row[65].upper() == 'TRUE')
+    # CP/CPS Same as Parent?
     row[68] = (row[68].upper() == 'TRUE')
+    # TLS Capable
+    row[74] = (row[74].upper() == 'TRUE')
+    # TLS EV Capable
+    row[75] = (row[75].upper() == 'TRUE')
+    # Code Signing Capable
+    row[76] = (row[76].upper() == 'TRUE')
+    # S/MIME Capable
+    row[77] = (row[77].upper() == 'TRUE')
+
     # Authority Key Identifier
-    if row[59] != '':
-        row[59] = base64.b64decode(row[59]).hex(':')
+    if row[17] != '':
+        row[17] = base64.b64decode(row[17]).hex(':')
     # Subject Key Identifier
-    if row[60] != '':
-        row[60] = base64.b64decode(row[60]).hex(':')
-    # date (YYYY-mm-dd)
-    row[13] = row[13].replace('.', '-')
-    row[14] = row[14].replace('.', '-')
+    if row[18] != '':
+        row[18] = base64.b64decode(row[18]).hex(':')
+
+    # Valid From (GMT)
     row[15] = row[15].replace('.', '-')
-    row[18] = row[18].replace('.', '-')
-    row[19] = row[19].replace('.', '-')
-    row[20] = row[20].replace('.', '-')
-    row[23] = row[23].replace('.', '-')
-    row[24] = row[24].replace('.', '-')
-    row[25] = row[25].replace('.', '-')
+    # Valid To (GMT)
+    row[16] = row[16].replace('.', '-')
+    # Standard Audit Statement Date
+    row[27] = row[27].replace('.', '-')
+    # Standard Audit Period Start Date
     row[28] = row[28].replace('.', '-')
+    # Standard Audit Period End Date
     row[29] = row[29].replace('.', '-')
-    row[30] = row[30].replace('.', '-')
+    # NetSec Audit Statement Date
+    row[32] = row[32].replace('.', '-')
+    # NetSec Audit Period Start Date
     row[33] = row[33].replace('.', '-')
+    # NetSec Audit Period End Date
     row[34] = row[34].replace('.', '-')
-    row[35] = row[35].replace('.', '-')
+    # TLS BR Audit Statement Date
+    row[37] = row[37].replace('.', '-')
+    # TLS BR Audit Period Start Date
     row[38] = row[38].replace('.', '-')
+    # TLS BR Audit Period End Date
     row[39] = row[39].replace('.', '-')
-    row[40] = row[40].replace('.', '-')
+    # TLS EVG Audit Statement Date
+    row[42] = row[42].replace('.', '-')
+    # TLS EVG Audit Period Start Date
+    row[43] = row[43].replace('.', '-')
+    # TLS EVG Audit Period End Date
     row[44] = row[44].replace('.', '-')
+    # Code Signing Audit Statement Date
+    row[47] = row[47].replace('.', '-')
+    # Code Signing Audit Period Start Date
+    row[48] = row[48].replace('.', '-')
+    # Code Signing Audit Period End Date
+    row[49] = row[49].replace('.', '-')
+    # S/MIME BR Audit Statement Date
     row[52] = row[52].replace('.', '-')
+    # S/MIME BR Audit Period Start Date
     row[53] = row[53].replace('.', '-')
+    # S/MIME BR Audit Period End Date
+    row[54] = row[54].replace('.', '-')
+    # VMC Audit Statement Date
+    row[57] = row[57].replace('.', '-')
+    # VMC Audit Period Start Date
+    row[58] = row[58].replace('.', '-')
+    # VMC Audit Period End Date
+    row[59] = row[59].replace('.', '-')
+    # CP Last Update Date
+    row[64] = row[64].replace('.', '-')
+    # CPS Last Update Date
     row[67] = row[67].replace('.', '-')
-    row[69] = row[69].replace('.', '-')
+    # CP/CPS Last Update Date
+    row[70] = row[70].replace('.', '-')
+
     # JSON array
-    if row[51] != '':
-        row[51] = '\n'.join(json.loads(row[51]))
-    # Status of Root Cert
-    root_status = {k: v for k, v in (e.split(': ', maxsplit=1) for e in row[58].split('; '))}
-    row[55] = root_status['Google Chrome']
-    row[56] = root_status['Microsoft']
-    row[57] = root_status['Mozilla']
-    row.insert(58, root_status['Apple'])
-    row.insert(58, row.pop(54))
+    if row[22] != '':
+        row[22] = '\n'.join(json.loads(row[22]))
 
 
 def add_metadata_sheet(metadata_sheet):
@@ -159,83 +183,91 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:BW{num_records}"
+    sheet.auto_filter.ref = f"A1:CE{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
     sheet.column_dimensions['C'].width = 36
     sheet.column_dimensions['D'].width = 4
     sheet.column_dimensions['E'].width = 24
-    sheet.column_dimensions['F'].width = 16
-    sheet.column_dimensions['G'].width = 16
-    sheet.column_dimensions['H'].width = 4
-    sheet.column_dimensions['I'].width = 4
-    sheet.column_dimensions['J'].width = 8
-    sheet.column_dimensions['K'].width = 24
-    sheet.column_dimensions['L'].width = 14
-    sheet.column_dimensions['M'].width = 14
-    sheet.column_dimensions['N'].width = 12
-    sheet.column_dimensions['O'].width = 12
-    sheet.column_dimensions['P'].width = 12
-    sheet.column_dimensions['Q'].width = 14
-    sheet.column_dimensions['R'].width = 14
-    sheet.column_dimensions['S'].width = 12
-    sheet.column_dimensions['T'].width = 12
-    sheet.column_dimensions['U'].width = 12
-    sheet.column_dimensions['V'].width = 14
+    sheet.column_dimensions['F'].width = 22
+    sheet.column_dimensions['G'].width = 24
+    sheet.column_dimensions['H'].width = 18
+    sheet.column_dimensions['I'].width = 18
+    sheet.column_dimensions['J'].width = 18
+    sheet.column_dimensions['K'].width = 18
+    sheet.column_dimensions['L'].width = 4
+    sheet.column_dimensions['M'].width = 8
+    sheet.column_dimensions['N'].width = 16
+    sheet.column_dimensions['O'].width = 4
+    sheet.column_dimensions['P'].width = 4
+    sheet.column_dimensions['Q'].width = 12
+    sheet.column_dimensions['R'].width = 12
+    sheet.column_dimensions['S'].width = 4
+    sheet.column_dimensions['T'].width = 4
+    sheet.column_dimensions['U'].width = 8
+    sheet.column_dimensions['V'].width = 36
     sheet.column_dimensions['W'].width = 14
-    sheet.column_dimensions['X'].width = 12
-    sheet.column_dimensions['Y'].width = 12
-    sheet.column_dimensions['Z'].width = 12
-    sheet.column_dimensions['AA'].width = 14
+    sheet.column_dimensions['X'].width = 14
+    sheet.column_dimensions['Y'].width = 8
+    sheet.column_dimensions['Z'].width = 24
+    sheet.column_dimensions['AA'].width = 8
     sheet.column_dimensions['AB'].width = 14
-    sheet.column_dimensions['AC'].width = 12
+    sheet.column_dimensions['AC'].width = 14
     sheet.column_dimensions['AD'].width = 12
     sheet.column_dimensions['AE'].width = 12
-    sheet.column_dimensions['AF'].width = 14
+    sheet.column_dimensions['AF'].width = 12
     sheet.column_dimensions['AG'].width = 14
-    sheet.column_dimensions['AH'].width = 12
+    sheet.column_dimensions['AH'].width = 14
     sheet.column_dimensions['AI'].width = 12
     sheet.column_dimensions['AJ'].width = 12
-    sheet.column_dimensions['AK'].width = 14
+    sheet.column_dimensions['AK'].width = 12
     sheet.column_dimensions['AL'].width = 14
-    sheet.column_dimensions['AM'].width = 12
+    sheet.column_dimensions['AM'].width = 14
     sheet.column_dimensions['AN'].width = 12
     sheet.column_dimensions['AO'].width = 12
-    sheet.column_dimensions['AP'].width = 8
+    sheet.column_dimensions['AP'].width = 12
     sheet.column_dimensions['AQ'].width = 14
     sheet.column_dimensions['AR'].width = 14
     sheet.column_dimensions['AS'].width = 12
-    sheet.column_dimensions['AT'].width = 14
-    sheet.column_dimensions['AU'].width = 14
+    sheet.column_dimensions['AT'].width = 12
+    sheet.column_dimensions['AU'].width = 12
     sheet.column_dimensions['AV'].width = 14
-    sheet.column_dimensions['AW'].width = 8
-    sheet.column_dimensions['AX'].width = 24
-    sheet.column_dimensions['AY'].width = 14
-    sheet.column_dimensions['AZ'].width = 14
-    sheet.column_dimensions['BA'].width = 8
-    sheet.column_dimensions['BB'].width = 12
+    sheet.column_dimensions['AW'].width = 14
+    sheet.column_dimensions['AX'].width = 12
+    sheet.column_dimensions['AY'].width = 12
+    sheet.column_dimensions['AZ'].width = 12
+    sheet.column_dimensions['BA'].width = 14
+    sheet.column_dimensions['BB'].width = 14
     sheet.column_dimensions['BC'].width = 12
-    sheet.column_dimensions['BD'].width = 18
-    sheet.column_dimensions['BE'].width = 18
-    sheet.column_dimensions['BF'].width = 18
-    sheet.column_dimensions['BG'].width = 18
-    sheet.column_dimensions['BH'].width = 8
-    sheet.column_dimensions['BI'].width = 36
-    sheet.column_dimensions['BJ'].width = 4
-    sheet.column_dimensions['BK'].width = 4
-    sheet.column_dimensions['BL'].width = 12
-    sheet.column_dimensions['BM'].width = 4
-    sheet.column_dimensions['BN'].width = 8
-    sheet.column_dimensions['BO'].width = 8
+    sheet.column_dimensions['BD'].width = 12
+    sheet.column_dimensions['BE'].width = 12
+    sheet.column_dimensions['BF'].width = 14
+    sheet.column_dimensions['BG'].width = 14
+    sheet.column_dimensions['BH'].width = 12
+    sheet.column_dimensions['BI'].width = 12
+    sheet.column_dimensions['BJ'].width = 12
+    sheet.column_dimensions['BK'].width = 14
+    sheet.column_dimensions['BL'].width = 14
+    sheet.column_dimensions['BM'].width = 8
+    sheet.column_dimensions['BN'].width = 14
+    sheet.column_dimensions['BO'].width = 12
     sheet.column_dimensions['BP'].width = 8
-    sheet.column_dimensions['BQ'].width = 8
-    sheet.column_dimensions['BR'].width = 8
-    sheet.column_dimensions['BS'].width = 12
-    sheet.column_dimensions['BT'].width = 8
+    sheet.column_dimensions['BQ'].width = 14
+    sheet.column_dimensions['BR'].width = 12
+    sheet.column_dimensions['BS'].width = 8
+    sheet.column_dimensions['BT'].width = 14
     sheet.column_dimensions['BU'].width = 12
     sheet.column_dimensions['BV'].width = 14
-    sheet.column_dimensions['BW'].width = 4
+    sheet.column_dimensions['BW'].width = 14
+    sheet.column_dimensions['BX'].width = 14
+    sheet.column_dimensions['BY'].width = 8
+    sheet.column_dimensions['BZ'].width = 8
+    sheet.column_dimensions['CA'].width = 8
+    sheet.column_dimensions['CB'].width = 8
+    sheet.column_dimensions['CC'].width = 12
+    sheet.column_dimensions['CD'].width = 4
+    sheet.column_dimensions['CE'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -269,7 +301,7 @@ def main():
             ),
     ]
     for rule in cert_revoked_rules:
-        sheet.conditional_formatting.add(f"G2:G{num_records}", rule)
+        sheet.conditional_formatting.add(f"N2:N{num_records}", rule)
 
     cert_constrained_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -280,7 +312,7 @@ def main():
             ),
     ]
     for rule in cert_constrained_rules:
-        sheet.conditional_formatting.add(f"AW2:AW{num_records}", rule)
+        sheet.conditional_formatting.add(f"U2:U{num_records}", rule)
 
     cert_not_trusted_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -291,19 +323,15 @@ def main():
             ),
     ]
     for rule in cert_not_trusted_rules:
-        sheet.conditional_formatting.add(f"BH2:BH{num_records}", rule)
+        sheet.conditional_formatting.add(f"M2:M{num_records}", rule)
 
     with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         header = next(csv_reader)
-        header.pop(58)
-        header[55] = 'Google Chrome Status'
-        header.insert(58, 'Apple Status')
-        header.insert(58, header.pop(54))
-        header.insert(58, 'X-Included in any Root Store?')
-        header.insert(52, 'X-Number of items in "JSON Array of Partitioned CRLs"')
-        header.insert(64, 'X-Country (alpha-2)')
+        header.append('X-Country (alpha-2)')
         header.append('X-crt.sh link')
+        header.insert(23, 'X-Number of items in "JSON Array of Partitioned CRLs"')
+        header.insert(12, 'X-Included in any Root Store?')
         header = [openpyxl.cell.WriteOnlyCell(sheet, value=hc) for hc in header]
         for hc in header:
             hc.font = HFONT_STYLE
@@ -313,41 +341,39 @@ def main():
         sheet.append(header)
 
         for row_no, row in enumerate(csv_reader, 2):
-            if len(row) != 71:
+            if len(row) != 79:
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
 
-            row.pop(59)
-
-            # X-Included in any Root Store?
-            row.insert(58, any(e.capitalize() == 'Included' for e in row[54:58]))
-
             # X-Country (alpha-2)
-            row.insert(63, get_country_code(row[62]))
-
-            # X-Number of items in "JSON Array of Partitioned CRLs"
-            if row[51] != '':
-                row.insert(52, row[51].count('\n') + 1)
-            else:
-                row.insert(52, '')
+            row.append(get_country_code(row[78]))
 
             # X-crt.sh link
-            row.append(f"https://crt.sh/?sha256={row[7]}")
+            row.append(f"https://crt.sh/?sha256={row[13]}")
+
+            # X-Number of items in "JSON Array of Partitioned CRLs"
+            if row[22] != '':
+                row.insert(23, row[22].count('\n') + 1)
+            else:
+                row.insert(23, '')
+
+            # X-Included in any Root Store?
+            row.insert(12, any(e.capitalize() == 'Included' for e in row[7:11]))
 
             row = [openpyxl.cell.WriteOnlyCell(sheet, value=c) for c in row]
             for col_idx, cell in enumerate(row):
                 cell.border = BORDER_STYLE
-                if col_idx in {9, 41, 48, 59, 65, 66, 67, 68, 69, 71}:
+                if col_idx in {20, 26, 64, 67, 70, 76, 77, 78, 79}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
-                elif col_idx in {13, 14, 15, 18, 19, 20, 23, 24, 25, 28, 29, 30, 33, 34, 35, 38, 39, 40, 44, 53, 54, 70, 72}:
+                elif col_idx in {16, 17, 29, 30, 31, 34, 35, 36, 39, 40, 41, 44, 45, 46, 49, 50, 51, 54, 55, 56, 59, 60, 61, 66, 69, 72}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
                     if cell.value != '':
                         cell.value = datetime.date.fromisoformat(cell.value)
                     else:
                         cell.value = None
-                elif col_idx in {52}:
+                elif col_idx in {24}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
-                elif col_idx in {74}:
+                elif col_idx in {82}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'
