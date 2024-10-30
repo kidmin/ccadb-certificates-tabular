@@ -3,10 +3,12 @@
 import base64
 import countrycode
 import csv
+import dataclasses
 import datetime
 from functools import cache
 import json
 import openpyxl
+import sys
 
 
 # header font
@@ -172,18 +174,65 @@ def add_metadata_sheet(metadata_sheet):
     metadata_sheet.append(row)
 
 
+@dataclasses.dataclass(eq=False)
+class CACertificate:
+    is_root: bool
+    is_trusted: bool | None
+    children: set = dataclasses.field(default_factory=set)
+
+
 def main():
+    cert_by_sfid = dict()
+    cert_tree_edges = list()
+    cert_tree_roots = set()
+
+    print('START pass 1 of loading the table', file=sys.stderr)
     num_records = 0
     with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
-        for _ in csv_reader:
+        for row in csv_reader:
             num_records += 1
 
+            sfid = row[1]
+            paernt_sfid = row[3]
+            is_root = row[5] == 'Root Certificate'
+            if is_root:
+                is_trusted = any(e.capitalize() == 'Included' for e in row[7:11])
+            else:
+                is_trusted = None
+            cert_by_sfid[sfid] = CACertificate(is_root=is_root, is_trusted=is_trusted)
+            cert_tree_edges.append((paernt_sfid, sfid))
+    print('END pass 1 of loading the table', file=sys.stderr)
+
+    print('START building CA tree', file=sys.stderr)
+    for parent_sfid, child_sfid in cert_tree_edges:
+        if parent_sfid in cert_by_sfid:
+            cert_by_sfid[parent_sfid].children.add(child_sfid)
+        else:
+            cert_tree_roots.add(child_sfid)
+    del cert_tree_edges
+    hier_stack = [list(cert_tree_roots)]
+    while hier_stack:
+        if hier_stack[-1]:
+            sfid = hier_stack[-1][-1]
+            next_children = list(cert_by_sfid[sfid].children)
+            for child_sfid in next_children:
+                if not cert_by_sfid[child_sfid].is_root:
+                    cert_by_sfid[child_sfid].is_trusted = cert_by_sfid[sfid].is_trusted
+            hier_stack[-1].pop()
+            if next_children:
+                hier_stack.append(next_children)
+        else:
+            hier_stack.pop()
+    del cert_tree_roots
+    print('END building CA tree', file=sys.stderr)
+
+    print('START preparing workbook', file=sys.stderr)
     book = openpyxl.Workbook(write_only=True)
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:CE{num_records}"
+    sheet.auto_filter.ref = f"A1:CF{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -198,76 +247,77 @@ def main():
     sheet.column_dimensions['K'].width = 18
     sheet.column_dimensions['L'].width = 4
     sheet.column_dimensions['M'].width = 8
-    sheet.column_dimensions['N'].width = 16
-    sheet.column_dimensions['O'].width = 4
+    sheet.column_dimensions['N'].width = 8
+    sheet.column_dimensions['O'].width = 16
     sheet.column_dimensions['P'].width = 4
-    sheet.column_dimensions['Q'].width = 12
+    sheet.column_dimensions['Q'].width = 4
     sheet.column_dimensions['R'].width = 12
-    sheet.column_dimensions['S'].width = 4
+    sheet.column_dimensions['S'].width = 12
     sheet.column_dimensions['T'].width = 4
-    sheet.column_dimensions['U'].width = 8
-    sheet.column_dimensions['V'].width = 36
-    sheet.column_dimensions['W'].width = 14
+    sheet.column_dimensions['U'].width = 4
+    sheet.column_dimensions['V'].width = 8
+    sheet.column_dimensions['W'].width = 36
     sheet.column_dimensions['X'].width = 14
-    sheet.column_dimensions['Y'].width = 8
-    sheet.column_dimensions['Z'].width = 24
-    sheet.column_dimensions['AA'].width = 8
-    sheet.column_dimensions['AB'].width = 14
+    sheet.column_dimensions['Y'].width = 14
+    sheet.column_dimensions['Z'].width = 8
+    sheet.column_dimensions['AA'].width = 24
+    sheet.column_dimensions['AB'].width = 8
     sheet.column_dimensions['AC'].width = 14
-    sheet.column_dimensions['AD'].width = 12
+    sheet.column_dimensions['AD'].width = 14
     sheet.column_dimensions['AE'].width = 12
     sheet.column_dimensions['AF'].width = 12
-    sheet.column_dimensions['AG'].width = 14
+    sheet.column_dimensions['AG'].width = 12
     sheet.column_dimensions['AH'].width = 14
-    sheet.column_dimensions['AI'].width = 12
+    sheet.column_dimensions['AI'].width = 14
     sheet.column_dimensions['AJ'].width = 12
     sheet.column_dimensions['AK'].width = 12
-    sheet.column_dimensions['AL'].width = 14
+    sheet.column_dimensions['AL'].width = 12
     sheet.column_dimensions['AM'].width = 14
-    sheet.column_dimensions['AN'].width = 12
+    sheet.column_dimensions['AN'].width = 14
     sheet.column_dimensions['AO'].width = 12
     sheet.column_dimensions['AP'].width = 12
-    sheet.column_dimensions['AQ'].width = 14
+    sheet.column_dimensions['AQ'].width = 12
     sheet.column_dimensions['AR'].width = 14
-    sheet.column_dimensions['AS'].width = 12
+    sheet.column_dimensions['AS'].width = 14
     sheet.column_dimensions['AT'].width = 12
     sheet.column_dimensions['AU'].width = 12
-    sheet.column_dimensions['AV'].width = 14
+    sheet.column_dimensions['AV'].width = 12
     sheet.column_dimensions['AW'].width = 14
-    sheet.column_dimensions['AX'].width = 12
+    sheet.column_dimensions['AX'].width = 14
     sheet.column_dimensions['AY'].width = 12
     sheet.column_dimensions['AZ'].width = 12
-    sheet.column_dimensions['BA'].width = 14
+    sheet.column_dimensions['BA'].width = 12
     sheet.column_dimensions['BB'].width = 14
-    sheet.column_dimensions['BC'].width = 12
+    sheet.column_dimensions['BC'].width = 14
     sheet.column_dimensions['BD'].width = 12
     sheet.column_dimensions['BE'].width = 12
-    sheet.column_dimensions['BF'].width = 14
+    sheet.column_dimensions['BF'].width = 12
     sheet.column_dimensions['BG'].width = 14
-    sheet.column_dimensions['BH'].width = 12
+    sheet.column_dimensions['BH'].width = 14
     sheet.column_dimensions['BI'].width = 12
     sheet.column_dimensions['BJ'].width = 12
-    sheet.column_dimensions['BK'].width = 14
+    sheet.column_dimensions['BK'].width = 12
     sheet.column_dimensions['BL'].width = 14
-    sheet.column_dimensions['BM'].width = 8
-    sheet.column_dimensions['BN'].width = 14
-    sheet.column_dimensions['BO'].width = 12
-    sheet.column_dimensions['BP'].width = 8
-    sheet.column_dimensions['BQ'].width = 14
-    sheet.column_dimensions['BR'].width = 12
-    sheet.column_dimensions['BS'].width = 8
-    sheet.column_dimensions['BT'].width = 14
-    sheet.column_dimensions['BU'].width = 12
-    sheet.column_dimensions['BV'].width = 14
+    sheet.column_dimensions['BM'].width = 14
+    sheet.column_dimensions['BN'].width = 8
+    sheet.column_dimensions['BO'].width = 14
+    sheet.column_dimensions['BP'].width = 12
+    sheet.column_dimensions['BQ'].width = 8
+    sheet.column_dimensions['BR'].width = 14
+    sheet.column_dimensions['BS'].width = 12
+    sheet.column_dimensions['BT'].width = 8
+    sheet.column_dimensions['BU'].width = 14
+    sheet.column_dimensions['BV'].width = 12
     sheet.column_dimensions['BW'].width = 14
     sheet.column_dimensions['BX'].width = 14
-    sheet.column_dimensions['BY'].width = 8
+    sheet.column_dimensions['BY'].width = 14
     sheet.column_dimensions['BZ'].width = 8
     sheet.column_dimensions['CA'].width = 8
     sheet.column_dimensions['CB'].width = 8
-    sheet.column_dimensions['CC'].width = 12
-    sheet.column_dimensions['CD'].width = 4
+    sheet.column_dimensions['CC'].width = 8
+    sheet.column_dimensions['CD'].width = 12
     sheet.column_dimensions['CE'].width = 4
+    sheet.column_dimensions['CF'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -301,7 +351,7 @@ def main():
             ),
     ]
     for rule in cert_revoked_rules:
-        sheet.conditional_formatting.add(f"N2:N{num_records}", rule)
+        sheet.conditional_formatting.add(f"O2:O{num_records}", rule)
 
     cert_constrained_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -312,7 +362,7 @@ def main():
             ),
     ]
     for rule in cert_constrained_rules:
-        sheet.conditional_formatting.add(f"U2:U{num_records}", rule)
+        sheet.conditional_formatting.add(f"V2:V{num_records}", rule)
 
     cert_not_trusted_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -324,13 +374,17 @@ def main():
     ]
     for rule in cert_not_trusted_rules:
         sheet.conditional_formatting.add(f"M2:M{num_records}", rule)
+        sheet.conditional_formatting.add(f"N2:N{num_records}", rule)
+    print('END preparing workbook', file=sys.stderr)
 
+    print('START pass 2 of loading the table', file=sys.stderr)
     with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         header = next(csv_reader)
         header.append('X-Country (alpha-2)')
         header.append('X-crt.sh link')
         header.insert(23, 'X-Number of items in "JSON Array of Partitioned CRLs"')
+        header.insert(12, 'X-Chains up to Roots Included in any Root Store?')
         header.insert(12, 'X-Included in any Root Store?')
         header = [openpyxl.cell.WriteOnlyCell(sheet, value=hc) for hc in header]
         for hc in header:
@@ -357,23 +411,29 @@ def main():
             else:
                 row.insert(23, '')
 
+            # X-Chains up to Roots Included in any Root Store?
+            if row[5] == 'Intermediate Certificate':
+                row.insert(12, cert_by_sfid[row[1]].is_trusted)
+            else:
+                row.insert(12, None)
+
             # X-Included in any Root Store?
             row.insert(12, any(e.capitalize() == 'Included' for e in row[7:11]))
 
             row = [openpyxl.cell.WriteOnlyCell(sheet, value=c) for c in row]
             for col_idx, cell in enumerate(row):
                 cell.border = BORDER_STYLE
-                if col_idx in {20, 26, 64, 67, 70, 76, 77, 78, 79}:
+                if col_idx in {21, 27, 65, 68, 71, 77, 78, 79, 80}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
-                elif col_idx in {16, 17, 29, 30, 31, 34, 35, 36, 39, 40, 41, 44, 45, 46, 49, 50, 51, 54, 55, 56, 59, 60, 61, 66, 69, 72}:
+                elif col_idx in {17, 18, 30, 31, 32, 35, 36, 37, 40, 41, 42, 45, 46, 47, 50, 51, 52, 55, 56, 57, 60, 61, 62, 67, 70, 73}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
                     if cell.value != '':
                         cell.value = datetime.date.fromisoformat(cell.value)
                     else:
                         cell.value = None
-                elif col_idx in {24}:
+                elif col_idx in {25}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
-                elif col_idx in {82}:
+                elif col_idx in {83}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'
@@ -382,12 +442,15 @@ def main():
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
             sheet.row_dimensions[row_no].height = 13.5
             sheet.append(row)
+    print('END pass 2 of loading the table', file=sys.stderr)
 
     add_metadata_sheet(book.create_sheet(title='_metadata'))
 
     book.active = book.worksheets[0]
 
+    print('START saving workbook', file=sys.stderr)
     book.save('CCADB-certificates.xlsx')
+    print('END saving workbook', file=sys.stderr)
 
 
 if __name__ == '__main__':
