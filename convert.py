@@ -7,8 +7,9 @@ import dataclasses
 import datetime
 from functools import cache
 import json
+import logging
 import openpyxl
-import sys
+import time
 
 
 # header font
@@ -35,6 +36,16 @@ FILL_TECHNICALLY_CONSTRAINED = openpyxl.styles.PatternFill(patternType='solid', 
 
 # fill style: certificates not included in any root store
 FILL_NOT_TRUSTED = openpyxl.styles.PatternFill(patternType='solid', fgColor='c0c0c0', bgColor='c0c0c0')
+
+
+# logging stuff
+logging.basicConfig(
+    level=logging.INFO,
+    format=r'%(asctime)s.%(msecs)03dZ [%(levelname)s] %(name)s: %(message)s',
+    datefmt='%Y-%m-%dT%H:%M:%S'
+)
+logging.Formatter.converter = time.gmtime
+Logger = logging.getLogger(__name__)
 
 
 @cache
@@ -183,10 +194,10 @@ class CACertificate:
 
 def main():
     cert_by_sfid = dict()
-    cert_tree_edges = list()
-    cert_tree_roots = set()
+    cert_forest_edges = list()
+    cert_forest_roots = set()
 
-    print('START pass 1 of loading the table', file=sys.stderr)
+    Logger.info('START pass 1 of loading the table')
     num_records = 0
     with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
@@ -201,18 +212,20 @@ def main():
             else:
                 is_trusted = None
             cert_by_sfid[sfid] = CACertificate(is_root=is_root, is_trusted=is_trusted)
-            cert_tree_edges.append((paernt_sfid, sfid))
-    print('END pass 1 of loading the table', file=sys.stderr)
+            cert_forest_edges.append((paernt_sfid, sfid))
+    Logger.info('END pass 1 of loading the table')
 
-    print('START building CA tree', file=sys.stderr)
-    for parent_sfid, child_sfid in cert_tree_edges:
+    Logger.info('START building CA tree')
+    for parent_sfid, child_sfid in cert_forest_edges:
         if parent_sfid in cert_by_sfid:
             cert_by_sfid[parent_sfid].children.add(child_sfid)
         else:
-            cert_tree_roots.add(child_sfid)
-    del cert_tree_edges
-    hier_stack = [list(cert_tree_roots)]
+            cert_forest_roots.add(child_sfid)
+    del cert_forest_edges
+    hier_stack = [list(cert_forest_roots)]
     while hier_stack:
+        if len(hier_stack) > 7:
+            raise RuntimeError('loop detected while CA tree walk')
         if hier_stack[-1]:
             sfid = hier_stack[-1][-1]
             next_children = list(cert_by_sfid[sfid].children)
@@ -224,10 +237,10 @@ def main():
                 hier_stack.append(next_children)
         else:
             hier_stack.pop()
-    del cert_tree_roots
-    print('END building CA tree', file=sys.stderr)
+    del cert_forest_roots
+    Logger.info('END building CA tree')
 
-    print('START preparing workbook', file=sys.stderr)
+    Logger.info('START preparing workbook')
     book = openpyxl.Workbook(write_only=True)
 
     sheet = book.create_sheet(title='AllCertificateRecords')
@@ -375,9 +388,9 @@ def main():
     for rule in cert_not_trusted_rules:
         sheet.conditional_formatting.add(f"M2:M{num_records}", rule)
         sheet.conditional_formatting.add(f"N2:N{num_records}", rule)
-    print('END preparing workbook', file=sys.stderr)
+    Logger.info('END preparing workbook')
 
-    print('START pass 2 of loading the table', file=sys.stderr)
+    Logger.info('START pass 2 of loading the table')
     with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         header = next(csv_reader)
@@ -442,15 +455,15 @@ def main():
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
             sheet.row_dimensions[row_no].height = 13.5
             sheet.append(row)
-    print('END pass 2 of loading the table', file=sys.stderr)
+    Logger.info('END pass 2 of loading the table')
 
     add_metadata_sheet(book.create_sheet(title='_metadata'))
 
     book.active = book.worksheets[0]
 
-    print('START saving workbook', file=sys.stderr)
+    Logger.info('START saving workbook')
     book.save('CCADB-certificates.xlsx')
-    print('END saving workbook', file=sys.stderr)
+    Logger.info('END saving workbook')
 
 
 if __name__ == '__main__':
