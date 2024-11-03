@@ -436,7 +436,7 @@ def main():
             row = [openpyxl.cell.WriteOnlyCell(sheet, value=c) for c in row]
             for col_idx, cell in enumerate(row):
                 cell.border = BORDER_STYLE
-                if col_idx in {21, 27, 65, 68, 71, 77, 78, 79, 80}:
+                if col_idx in {12, 13, 21, 27, 65, 68, 71, 77, 78, 79, 80}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
                 elif col_idx in {17, 18, 30, 31, 32, 35, 36, 37, 40, 41, 42, 45, 46, 47, 50, 51, 52, 55, 56, 57, 60, 61, 62, 67, 70, 73}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
