@@ -18,10 +18,10 @@ jobs:
       - name: Checkout the repo
         uses: actions/checkout@v4
 
-      - name: Install Python 3.12.x
+      - name: Install Python 3.11.x
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.11'
 
       - name: Prepare the environment
         run: pip3 install openpyxl lxml countrycode==0.4.0
