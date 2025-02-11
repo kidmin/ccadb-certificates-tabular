@@ -1,0 +1,3 @@
+openpyxl
+lxml
+countrycode == 0.4.0

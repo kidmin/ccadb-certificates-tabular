@@ -24,7 +24,7 @@ jobs:
           python-version: '3.11'
 
       - name: Prepare the environment
-        run: pip3 install openpyxl lxml countrycode==0.4.0
+        run: pip3 install -r requirements.txt
 
       - name: Download the latest AllCertificateRecordsCSVFormat
         run: curl --connect-timeout 30 --max-time 300 --location -O https://ccadb.my.salesforce-sites.com/ccadb/AllCertificateRecordsCSVFormatv2
