@@ -328,10 +328,10 @@ def main():
     sheet.column_dimensions['CA'].width = 8
     sheet.column_dimensions['CB'].width = 8
     sheet.column_dimensions['CC'].width = 8
-    sheet.column_dimensions['CD'].width = 12
-    sheet.column_dimensions['CE'].width = 4
-    sheet.column_dimensions['CF'].width = 14
-    sheet.column_dimensions['CG'].width = 14
+    sheet.column_dimensions['CD'].width = 14
+    sheet.column_dimensions['CE'].width = 14
+    sheet.column_dimensions['CF'].width = 12
+    sheet.column_dimensions['CG'].width = 4
     sheet.column_dimensions['CH'].width = 4
 
     cert_type_rules = [
@@ -396,8 +396,9 @@ def main():
     with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         header = next(csv_reader)
+        header.append('X-Country (alpha-2)')
         header.append('X-crt.sh link')
-        header.insert(79, 'X-Country (alpha-2)')
+        header.insert(80, header.pop(78))
         header.insert(23, 'X-Number of items in "JSON Array of Partitioned CRLs"')
         header.insert(12, 'X-Chains up to Roots Included in any Root Store?')
         header.insert(12, 'X-Included in any Root Store?')
@@ -414,11 +415,12 @@ def main():
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
 
+            # X-Country (alpha-2)
+            row.append(row.pop(78))
+            row.append(get_country_code(row[80]))
+
             # X-crt.sh link
             row.append(f"https://crt.sh/?sha256={row[13]}")
-
-            # X-Country (alpha-2)
-            row.insert(79, get_country_code(row[78]))
 
             # X-Number of items in "JSON Array of Partitioned CRLs"
             if row[22] != '':
@@ -448,7 +450,7 @@ def main():
                         cell.value = None
                 elif col_idx in {25}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
-                elif col_idx in {84}:
+                elif col_idx in {82}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                 elif col_idx in {85}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
