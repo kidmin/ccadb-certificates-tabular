@@ -245,7 +245,7 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:CF{num_records}"
+    sheet.auto_filter.ref = f"A1:CH{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -330,7 +330,9 @@ def main():
     sheet.column_dimensions['CC'].width = 8
     sheet.column_dimensions['CD'].width = 12
     sheet.column_dimensions['CE'].width = 4
-    sheet.column_dimensions['CF'].width = 4
+    sheet.column_dimensions['CF'].width = 14
+    sheet.column_dimensions['CG'].width = 14
+    sheet.column_dimensions['CH'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -394,8 +396,8 @@ def main():
     with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         header = next(csv_reader)
-        header.append('X-Country (alpha-2)')
         header.append('X-crt.sh link')
+        header.insert(79, 'X-Country (alpha-2)')
         header.insert(23, 'X-Number of items in "JSON Array of Partitioned CRLs"')
         header.insert(12, 'X-Chains up to Roots Included in any Root Store?')
         header.insert(12, 'X-Included in any Root Store?')
@@ -408,15 +410,15 @@ def main():
         sheet.append(header)
 
         for row_no, row in enumerate(csv_reader, 2):
-            if len(row) != 79:
+            if len(row) != 81:
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
 
-            # X-Country (alpha-2)
-            row.append(get_country_code(row[78]))
-
             # X-crt.sh link
             row.append(f"https://crt.sh/?sha256={row[13]}")
+
+            # X-Country (alpha-2)
+            row.insert(79, get_country_code(row[78]))
 
             # X-Number of items in "JSON Array of Partitioned CRLs"
             if row[22] != '':
@@ -446,7 +448,9 @@ def main():
                         cell.value = None
                 elif col_idx in {25}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
-                elif col_idx in {83}:
+                elif col_idx in {84}:
+                    cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
+                elif col_idx in {85}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'
