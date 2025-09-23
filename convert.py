@@ -68,22 +68,24 @@ def get_country_code(country_name):
 def canonicalize(row):
     # Technically Constrained
     row[19] = (row[19].upper() == 'TRUE')
-    # Audits Same as Parent?
+    # Audits Same as Parent
     row[24] = (row[24].upper() == 'TRUE')
-    # CP Same as Parent?
+    # CP Same as Parent
     row[62] = (row[62].upper() == 'TRUE')
-    # CPS Same as Parent?
+    # CPS Same as Parent
     row[65] = (row[65].upper() == 'TRUE')
-    # CP/CPS Same as Parent?
+    # CP/CPS Same as Parent
     row[68] = (row[68].upper() == 'TRUE')
+    # MD/AsciiDoc CP/CPS Same as Parent
+    row[71] = (row[71].upper() == 'TRUE')
     # TLS Capable
-    row[74] = (row[74].upper() == 'TRUE')
-    # TLS EV Capable
-    row[75] = (row[75].upper() == 'TRUE')
-    # Code Signing Capable
-    row[76] = (row[76].upper() == 'TRUE')
-    # S/MIME Capable
     row[77] = (row[77].upper() == 'TRUE')
+    # TLS EV Capable
+    row[78] = (row[78].upper() == 'TRUE')
+    # Code Signing Capable
+    row[79] = (row[79].upper() == 'TRUE')
+    # S/MIME Capable
+    row[80] = (row[80].upper() == 'TRUE')
 
     # Authority Key Identifier
     if row[17] != '':
@@ -138,12 +140,14 @@ def canonicalize(row):
     row[58] = row[58].replace('.', '-')
     # VMC Audit Period End Date
     row[59] = row[59].replace('.', '-')
-    # CP Last Update Date
+    # CP Effective Date
     row[64] = row[64].replace('.', '-')
-    # CPS Last Update Date
+    # CPS Effective Date
     row[67] = row[67].replace('.', '-')
-    # CP/CPS Last Update Date
+    # CP/CPS Effective Date
     row[70] = row[70].replace('.', '-')
+    # MD/AsciiDoc CP/CPS Effective Date
+    row[73] = row[73].replace('.', '-')
 
     # JSON array
     if row[22] != '':
@@ -199,7 +203,7 @@ def main():
 
     Logger.info('START pass 1 of loading the table')
     num_records = 0
-    with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
+    with open('AllCertificateRecordsCSVFormatv4', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         for row in csv_reader:
             num_records += 1
@@ -245,7 +249,7 @@ def main():
 
     sheet = book.create_sheet(title='AllCertificateRecords')
 
-    sheet.auto_filter.ref = f"A1:CH{num_records}"
+    sheet.auto_filter.ref = f"A1:CK{num_records}"
     sheet.freeze_panes = 'D2'
     sheet.column_dimensions['A'].width = 14
     sheet.column_dimensions['B'].width = 4
@@ -321,18 +325,21 @@ def main():
     sheet.column_dimensions['BT'].width = 8
     sheet.column_dimensions['BU'].width = 14
     sheet.column_dimensions['BV'].width = 12
-    sheet.column_dimensions['BW'].width = 14
+    sheet.column_dimensions['BW'].width = 8
     sheet.column_dimensions['BX'].width = 14
-    sheet.column_dimensions['BY'].width = 14
-    sheet.column_dimensions['BZ'].width = 8
-    sheet.column_dimensions['CA'].width = 8
-    sheet.column_dimensions['CB'].width = 8
+    sheet.column_dimensions['BY'].width = 12
+    sheet.column_dimensions['BZ'].width = 14
+    sheet.column_dimensions['CA'].width = 14
+    sheet.column_dimensions['CB'].width = 14
     sheet.column_dimensions['CC'].width = 8
-    sheet.column_dimensions['CD'].width = 14
-    sheet.column_dimensions['CE'].width = 14
-    sheet.column_dimensions['CF'].width = 12
-    sheet.column_dimensions['CG'].width = 4
-    sheet.column_dimensions['CH'].width = 4
+    sheet.column_dimensions['CD'].width = 8
+    sheet.column_dimensions['CE'].width = 8
+    sheet.column_dimensions['CF'].width = 8
+    sheet.column_dimensions['CG'].width = 14
+    sheet.column_dimensions['CH'].width = 14
+    sheet.column_dimensions['CI'].width = 12
+    sheet.column_dimensions['CJ'].width = 4
+    sheet.column_dimensions['CK'].width = 4
 
     cert_type_rules = [
         openpyxl.formatting.rule.CellIsRule(
@@ -393,12 +400,12 @@ def main():
     Logger.info('END preparing workbook')
 
     Logger.info('START pass 2 of loading the table')
-    with open('AllCertificateRecordsCSVFormatv2', 'r', encoding='UTF-8', newline='') as csv_fh:
+    with open('AllCertificateRecordsCSVFormatv4', 'r', encoding='UTF-8', newline='') as csv_fh:
         csv_reader = csv.reader(csv_fh, dialect='unix')
         header = next(csv_reader)
         header.append('X-Country (alpha-2)')
         header.append('X-crt.sh link')
-        header.insert(80, header.pop(78))
+        header.insert(83, header.pop(81))
         header.insert(23, 'X-Number of items in "JSON Array of Partitioned CRLs"')
         header.insert(12, 'X-Chains up to Roots Included in any Root Store?')
         header.insert(12, 'X-Included in any Root Store?')
@@ -411,13 +418,13 @@ def main():
         sheet.append(header)
 
         for row_no, row in enumerate(csv_reader, 2):
-            if len(row) != 81:
+            if len(row) != 84:
                 raise RuntimeError(f"unexpected number of rows {len(row)} at CSV line {row_no}")
             canonicalize(row)
 
             # X-Country (alpha-2)
-            row.append(row.pop(78))
-            row.append(get_country_code(row[80]))
+            row.append(row.pop(81))
+            row.append(get_country_code(row[83]))
 
             # X-crt.sh link
             row.append(f"https://crt.sh/?sha256={row[13]}")
@@ -440,9 +447,9 @@ def main():
             row = [openpyxl.cell.WriteOnlyCell(sheet, value=c) for c in row]
             for col_idx, cell in enumerate(row):
                 cell.border = BORDER_STYLE
-                if col_idx in {12, 13, 21, 27, 65, 68, 71, 77, 78, 79, 80}:
+                if col_idx in {12, 13, 21, 27, 65, 68, 71, 80, 81, 82, 83}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
-                elif col_idx in {17, 18, 30, 31, 32, 35, 36, 37, 40, 41, 42, 45, 46, 47, 50, 51, 52, 55, 56, 57, 60, 61, 62, 67, 70, 73}:
+                elif col_idx in {17, 18, 30, 31, 32, 35, 36, 37, 40, 41, 42, 45, 46, 47, 50, 51, 52, 55, 56, 57, 60, 61, 62, 67, 70, 73, 76}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_YYYYMMDD2
                     if cell.value != '':
                         cell.value = datetime.date.fromisoformat(cell.value)
@@ -450,9 +457,9 @@ def main():
                         cell.value = None
                 elif col_idx in {25}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
-                elif col_idx in {82}:
-                    cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                 elif col_idx in {85}:
+                    cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
+                elif col_idx in {88}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
                     href = cell.value
                     cell.value = '\U0001F4DC'

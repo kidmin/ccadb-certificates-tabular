@@ -1,4 +1,4 @@
-name: CI
+name: update-table
 
 on:
   schedule:
@@ -26,8 +26,8 @@ jobs:
       - name: Prepare the environment
         run: pip3 install -r requirements.txt
 
-      - name: Download the latest AllCertificateRecordsCSVFormat
-        run: curl --connect-timeout 30 --max-time 300 --location -O https://ccadb.my.salesforce-sites.com/ccadb/AllCertificateRecordsCSVFormatv2
+      - name: Download the latest AllCertificateRecordsCSVFormat (v4)
+        run: curl --connect-timeout 30 --max-time 300 --location -O https://ccadb.my.salesforce-sites.com/ccadb/AllCertificateRecordsCSVFormatv4
 
       - name: Generate the spreadsheet
         run: python3 convert.py
