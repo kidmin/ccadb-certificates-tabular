@@ -410,12 +410,16 @@ def main():
         header.insert(12, 'X-Chains up to Roots Included in any Root Store?')
         header.insert(12, 'X-Included in any Root Store?')
         header = [openpyxl.cell.WriteOnlyCell(sheet, value=hc) for hc in header]
+        header_style = openpyxl.styles.named_styles.NamedStyle(name='certsTableHeader', font=HFONT_STYLE, border=HBORDER_STYLE)
+        book.add_named_style(header_style)
         for hc in header:
-            hc.font = HFONT_STYLE
-            hc.border = HBORDER_STYLE
+            hc.style = 'certsTableHeader'
             hc.number_format = openpyxl.styles.numbers.FORMAT_TEXT
         sheet.row_dimensions[1].height = 14.25
         sheet.append(header)
+
+        body_style = openpyxl.styles.named_styles.NamedStyle(name='certsTableBody', border=BORDER_STYLE)
+        book.add_named_style(body_style)
 
         for row_no, row in enumerate(csv_reader, 2):
             if len(row) != 84:
@@ -446,7 +450,7 @@ def main():
 
             row = [openpyxl.cell.WriteOnlyCell(sheet, value=c) for c in row]
             for col_idx, cell in enumerate(row):
-                cell.border = BORDER_STYLE
+                cell.style = 'certsTableBody'
                 if col_idx in {12, 13, 21, 27, 65, 68, 71, 80, 81, 82, 83}:
                     cell.number_format = openpyxl.styles.numbers.FORMAT_GENERAL
                 elif col_idx in {17, 18, 30, 31, 32, 35, 36, 37, 40, 41, 42, 45, 46, 47, 50, 51, 52, 55, 56, 57, 60, 61, 62, 67, 70, 73, 76}:
