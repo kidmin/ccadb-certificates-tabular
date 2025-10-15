@@ -50,18 +50,17 @@ Logger = logging.getLogger(__name__)
 
 @cache
 def get_country_code(country_name):
-    candidate = None
     if len(country_name) == 2 and country_name.isascii():
         return country_name
-    else:
-        candidate = countrycode.countrycode(country_name, origin='country.name', destination='iso2c')
-        if candidate:
-            return candidate
-        else:
-            for fromcode in (e for e in countrycode.codelist.keys() if e.startswith('cldr.short.')):
-                for pos, candidate_name in enumerate(countrycode.codelist[fromcode]):
-                    if candidate_name.lower() == country_name.lower():
-                        return countrycode.codelist['iso2c'][pos]
+
+    if candidate := countrycode.countrycode(country_name, origin='country.name', destination='iso2c'):
+        return candidate
+
+    for fromcode in (e for e in countrycode.codelist.keys() if e.startswith('cldr.short.')):
+        for pos, candidate_name in enumerate(countrycode.codelist[fromcode]):
+            if candidate_name.lower() == country_name.lower():
+                return countrycode.codelist['iso2c'][pos]
+
     return ''
 
 
