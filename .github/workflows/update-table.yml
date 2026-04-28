@@ -6,7 +6,7 @@ on:
 
 jobs:
   update-spreadsheet:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 7
 
     permissions:
@@ -50,7 +50,7 @@ jobs:
 
   deploy-to-pages:
     needs: update-spreadsheet
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 2
 
     permissions:
