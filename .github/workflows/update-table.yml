@@ -23,7 +23,10 @@ jobs:
         with:
           python-version: '3.14'
 
-      - name: Prepare the environment
+      - name: Prepare the environment (pip selfupgrade)
+        run: pip3 install --upgrade pip
+
+      - name: Prepare the environment (requirements.txt)
         run: pip3 install -r requirements.txt
 
       - name: Download the latest AllCertificateRecordsCSVFormat (v4)
