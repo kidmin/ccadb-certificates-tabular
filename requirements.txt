@@ -1,3 +1,3 @@
 openpyxl
-lxml
+lxml; python_implementation != 'PyPy'
 countrycode == 0.4.0
